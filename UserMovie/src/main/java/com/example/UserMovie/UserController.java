@@ -36,11 +36,12 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) throws Exception{
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) throws Exception{
 
-        User username = userService.updateUser(user);
+        user.setId(id);
+        User updatedUser = userService.updateUser(user);
 
-        if(user != null){
+        if(updatedUser != null){
             return ResponseEntity.accepted().body(user);
         } else{
             return ResponseEntity.notFound().build();
