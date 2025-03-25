@@ -1,6 +1,7 @@
 package com.example.UserMovie;
 
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,4 +35,20 @@ public class UserController {
         userService.createUser(user);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) throws Exception{
+
+        User username = userService.updateUser(user);
+
+        if(user != null){
+            return ResponseEntity.accepted().body(user);
+        } else{
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
+    }
 }
