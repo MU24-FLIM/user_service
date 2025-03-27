@@ -17,6 +17,7 @@ import java.util.Optional;
 @RequestMapping("/users")
 public class UserController {
 
+    private String REVIEW_CLIENT_URL = System.getenv("REVIEW_CLIENT_URL");
 
     private final WebClient reviewClient;
     private final UserRepository userRepository;
@@ -66,6 +67,20 @@ public class UserController {
         userRepository.deleteById(id);
     }
 
+    @GetMapping("/exists/{id}")
+    public boolean userExists(@PathVariable Long id) {
+        return userRepository.existsById(id);
+    }
+
+
+    public Mono<Review> getReview(Long id) {
+        return userRepository.findById(id).map(movie ->
+                        reviewClient.get()
+                                .uri("/review/" + movie.getReviewId())
+                                .retrieve()
+                                .bodyToMono(Review.class))
+                .orElse(null);
+    }
 
     // get reviews
     @GetMapping("/{id}/reviews")

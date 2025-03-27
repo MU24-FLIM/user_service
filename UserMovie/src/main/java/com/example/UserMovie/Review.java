@@ -11,6 +11,13 @@ public class Review {
     public Review() {
     }
 
+    public Review(Long id, String title, String content, Long userId) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.userId = userId;
+    }
+
     public Long getId() {
         return id;
     }

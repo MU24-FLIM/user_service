@@ -3,7 +3,7 @@ package com.example.UserMovie;
 
 import jakarta.persistence.*;
 
-@Table
+@Table(name="users", uniqueConstraints = {@UniqueConstraint(columnNames = {"username", "email","age"})})
 @Entity
 public class User {
 
@@ -13,6 +13,7 @@ public class User {
     private String username;
     private String email;
     private Byte age;
+    private int reviewId;
 
     public User(){
 
@@ -48,5 +49,13 @@ public class User {
 
     public void setAge(Byte age) {
         this.age = age;
+    }
+
+
+    public int getReviewId() {
+        return reviewId;
+    }
+    public void setReviewId(int reviewId) {
+        this.reviewId = reviewId;
     }
 }
