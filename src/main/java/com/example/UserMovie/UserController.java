@@ -17,8 +17,6 @@ import java.util.Optional;
 @RequestMapping("/users")
 public class UserController {
 
-    private String REVIEW_CLIENT_URL = System.getenv("REVIEW_CLIENT_URL");
-
     private final WebClient reviewClient;
     private final UserRepository userRepository;
 
