@@ -1,15 +1,18 @@
 package com.example.UserMovie;
 
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import javax.naming.ServiceUnavailableException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,11 +41,16 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Mono<User>> getUserById(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(genre -> ResponseEntity.ok(Mono.just(genre)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            throw new EntityNotFoundException("User with id " + id + " not found");
+        }
 
+        User existingUser = user.get();
+        Flux<Review> userReviews = getReviews(existingUser.getId());
+
+        return ResponseEntity.ok(new UserResponse(existingUser, userReviews.collectList().block()));
     }
 
 
@@ -70,32 +78,15 @@ public class UserController {
         return userRepository.existsById(id);
     }
 
-
-    public Mono<Review> getReview(Long id) {
-        return userRepository.findById(id).map(movie ->
-                        reviewClient.get()
-                                .uri("/review/" + movie.getReviewId())
-                                .retrieve()
-                                .bodyToMono(Review.class))
-                .orElse(null);
-    }
-
-    // get reviews
-    @GetMapping("/{id}/reviews")
-    public Mono<ResponseEntity<UserResponse>> getReviewsByTheUserId(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    return reviewClient.get()
-                            .uri(("/reviews/user/" + id))
-                            .retrieve()
-                            .bodyToFlux(Review.class)
-                            .collectList()
-                            .map(reviews -> {
-                                UserResponse response = new UserResponse();
-                                response.setUser(user);
-                                response.setReviews(reviews);
-                                return ResponseEntity.ok(response);
-                            });
-                }).orElseGet(() -> Mono.just(ResponseEntity.notFound().build()));
+    private Flux<Review> getReviews(Long userId) {
+        return reviewClient.get()
+                .uri("reviews/user/" + userId)
+                .retrieve()
+                .bodyToFlux(Review.class)
+                .retryWhen(Retry.backoff(2, Duration.of(1, ChronoUnit.SECONDS))
+                        .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
+                                new ServiceUnavailableException("UNABLE TO CONNECT TO REVIEW SERVICE")
+                        )
+                );
     }
 }
