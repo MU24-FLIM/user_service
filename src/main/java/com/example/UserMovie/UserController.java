@@ -54,6 +54,12 @@ public class UserController {
     }
 
 
+@GetMapping("/{id}/review") // Lindas microservice
+public List<User> getUserByReviewId(@PathVariable Long id) {
+        return userRepository.findByUserId(id);
+}
+
+
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User updatedUser) {
         Optional<User> optionalUser = userRepository.findById(id);
