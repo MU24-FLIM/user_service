@@ -81,7 +81,7 @@ public class UserController {
 
     private Flux<Review> getReviews(Long userId) {
         return reviewClient.get()
-                .uri("reviews/user/" + userId)
+                .uri("reviews/" + userId + "/user")
                 .retrieve()
                 .bodyToFlux(Review.class)
                 .retryWhen(Retry.backoff(2, Duration.of(1, ChronoUnit.SECONDS))
